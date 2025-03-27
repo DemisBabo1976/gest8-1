@@ -1,4 +1,3 @@
-// File: C:\Users\demis\Desktop\gest8\client\src\components\dashboard\OrdiniWidget.jsx
 import React from 'react';
 import { Home, PhoneCall, User, Monitor, CheckCircle, ShoppingCart, ArrowRight } from 'lucide-react';
 

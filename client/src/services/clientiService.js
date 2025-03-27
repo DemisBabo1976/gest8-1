@@ -1,54 +1,25 @@
-// services/clientiService.js
 import axios from 'axios';
 
-// Base URL per le chiamate API
-const API_URL = '/api/clienti';
+const API_URL = 'http://localhost:5000/api';
 
-// Ottieni tutti i clienti
-export const getClienti = async () => {
+// Ottiene tutti i clienti
+export const getClienti = async (filtri = {}) => {
   try {
-    console.log('Tento di recuperare i clienti dall\'endpoint:', API_URL);
-    
-    const response = await axios.get(API_URL, {
-      // Aggiungi opzioni per gestire eventuali problemi di CORS o configurazione
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    console.log('Risposta dal server:', response.data);
-    
-    // Gestisci diversi formati di risposta
-    return response.data.data || response.data;
+    const response = await axios.get(`${API_URL}/clienti`, { params: filtri });
+    return response.data.data;
   } catch (error) {
-    console.error('Errore dettagliato nel recupero dei clienti:', error);
-    
-    // Gestisci differenti tipi di errori
-    if (error.response) {
-      // Il server ha risposto con un codice di stato fuori dal range 2xx
-      console.error('Dati dell\'errore:', error.response.data);
-      console.error('Stato dell\'errore:', error.response.status);
-    } else if (error.request) {
-      // La richiesta è stata fatta ma non è stata ricevuta alcuna risposta
-      console.error('Nessuna risposta ricevuta:', error.request);
-    } else {
-      // Qualcosa è andato storto durante la configurazione della richiesta
-      console.error('Errore di configurazione:', error.message);
-    }
-    
+    console.error('Errore nel recupero dei clienti:', error);
     throw error;
   }
 };
 
-// Cerca clienti per query
-export const cercaClienti = async (query) => {
+// Ottiene un cliente specifico
+export const getCliente = async (id) => {
   try {
-    const response = await axios.get(`${API_URL}/search`, {
-      params: { q: query }
-    });
-    return response.data.data || response.data;
+    const response = await axios.get(`${API_URL}/clienti/${id}`);
+    return response.data.data;
   } catch (error) {
-    console.error('Errore nella ricerca dei clienti:', error);
+    console.error(`Errore nel recupero del cliente con ID ${id}:`, error);
     throw error;
   }
 };
@@ -56,23 +27,21 @@ export const cercaClienti = async (query) => {
 // Crea un nuovo cliente
 export const createCliente = async (cliente) => {
   try {
-    const response = await axios.post(API_URL, cliente);
-    return response.data.data || response.data;
+    const response = await axios.post(`${API_URL}/clienti`, cliente);
+    return response.data.data;
   } catch (error) {
     console.error('Errore nella creazione del cliente:', error);
     throw error;
   }
 };
 
-// Altre funzioni come updateCliente, deleteCliente rimangono invariate
-
-// Aggiorna un cliente
+// Aggiorna un cliente esistente
 export const updateCliente = async (id, cliente) => {
   try {
-    const response = await axios.put(`${API_URL}/${id}`, cliente);
-    return response.data;
+    const response = await axios.put(`${API_URL}/clienti/${id}`, cliente);
+    return response.data.data;
   } catch (error) {
-    console.error(`Errore nell'aggiornamento del cliente ${id}:`, error);
+    console.error(`Errore nell'aggiornamento del cliente con ID ${id}:`, error);
     throw error;
   }
 };
@@ -80,10 +49,30 @@ export const updateCliente = async (id, cliente) => {
 // Elimina un cliente
 export const deleteCliente = async (id) => {
   try {
-    const response = await axios.delete(`${API_URL}/${id}`);
+    const response = await axios.delete(`${API_URL}/clienti/${id}`);
     return response.data;
   } catch (error) {
-    console.error(`Errore nell'eliminazione del cliente ${id}:`, error);
+    console.error(`Errore nell'eliminazione del cliente con ID ${id}:`, error);
     throw error;
   }
+};
+
+// Cerca clienti
+export const searchClienti = async (query) => {
+  try {
+    const response = await axios.get(`${API_URL}/clienti/search`, { params: { q: query } });
+    return response.data.data;
+  } catch (error) {
+    console.error('Errore nella ricerca dei clienti:', error);
+    throw error;
+  }
+};
+
+export default {
+  getClienti,
+  getCliente,
+  createCliente,
+  updateCliente,
+  deleteCliente,
+  searchClienti
 };

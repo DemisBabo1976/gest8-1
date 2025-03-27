@@ -1,17 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  PieChart, Pizza, Users, Clock, TrendingUp, 
-  Award, Calendar, Flame, ShoppingCart, ChefHat,
-  Wallet, Star, Settings, FileText, Package,
-  BarChart2, ArrowRight, Home, CreditCard, 
-  PhoneCall, Monitor, CheckCircle, AlertCircle,
-  DollarSign, User, Eye, EyeOff, Tag, RefreshCw
-} from 'lucide-react';
+import { RefreshCw, Pizza, Clock, ShoppingCart, Award, Home, PhoneCall, User, Monitor, CheckCircle, BarChart2, PieChart, Package, Wallet, Settings, FileText, Eye, EyeOff, CreditCard, Tag, ArrowRight, Users, ChefHat, DollarSign } from 'lucide-react';
 import OrdiniWidget from './OrdiniWidget'; // Importa il widget degli ordini per la dashboard
 
 const PizzeriaDashboard = () => {
-  // Navigazione con React Router
   const navigate = useNavigate();
   
   // Stati per la gestione dei dati
@@ -61,8 +53,7 @@ const PizzeriaDashboard = () => {
   
   // Stato per l'ultimo aggiornamento
   const [ultimoAggiornamento, setUltimoAggiornamento] = useState(new Date());
-  
-  // Stato per indicare se l'aggiornamento è in corso
+    // Stato per indicare se l'aggiornamento è in corso
   const [aggiornamentoInCorso, setAggiornamentoInCorso] = useState(false);
   
   // Stato per toggle visibilità voci cassa
@@ -77,15 +68,14 @@ const PizzeriaDashboard = () => {
   // Funzione per ottenere i dati aggiornati dal server
   const fetchDatiAggiornati = useCallback(async () => {
     setAggiornamentoInCorso(true);
-    
+
     try {
-      // Chiamata API reale al backend
       const response = await fetch('http://localhost:5000/api/dashboard');
       const data = await response.json();
-      
+
       // Aggiornamento delle metriche con i dati dal backend
       setMetriche(data);
-      
+
       // Aggiornamento dei dati strutturati per i nuovi widget
       if (data.statistiche) {
         setDashboardData({
@@ -95,26 +85,20 @@ const PizzeriaDashboard = () => {
           ordiniAttivi: data.ordiniAttivi || []
         });
       }
-      
+
       // Aggiornamento del timestamp
       setUltimoAggiornamento(new Date());
     } catch (error) {
       console.error('Errore durante l\'aggiornamento dei dati:', error);
-      // Opzionale: gestione degli errori (ad esempio mostrare un messaggio all'utente)
     } finally {
       setAggiornamentoInCorso(false);
     }
   }, []);
-  
+
   // Effetto per aggiornamento automatico periodico
   useEffect(() => {
-    // Aggiornamento iniziale
     fetchDatiAggiornati();
-    
-    // Imposta un intervallo per aggiornare i dati ogni 30 secondi
     const intervalId = setInterval(fetchDatiAggiornati, 30000);
-    
-    // Pulizia dell'intervallo quando il componente viene smontato
     return () => clearInterval(intervalId);
   }, [fetchDatiAggiornati]);
 
@@ -125,12 +109,10 @@ const PizzeriaDashboard = () => {
       [voce]: !visibilitaCassa[voce]
     });
   };
-
   // Funzione per la navigazione verso altre pagine
   const navigaVerso = (pagina) => {
     console.log(`Navigazione verso: ${pagina}`);
-    
-    // Gestisci la navigazione in base alla pagina selezionata
+
     switch (pagina.toLowerCase()) {
       case 'clienti':
         navigate('/clienti');
@@ -144,9 +126,7 @@ const PizzeriaDashboard = () => {
       case 'gestione ordini':
         navigate('/ordini');
         break;  
-      // Aggiungi altri casi per le altre pagine
       default:
-        // Per le pagine non ancora implementate, mostra un alert
         alert(`Hai cliccato sul widget: ${pagina}`);
     }
   };
@@ -180,67 +160,61 @@ const PizzeriaDashboard = () => {
           </div>
         </div>
       </header>
-
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Widget Gestione Ordini */}
-        <div 
-          className="bg-red-100 rounded-xl p-4 shadow-md transition-all hover:shadow-lg hover:translate-y-1 cursor-pointer md:col-span-2"
-          onClick={() => navigaVerso('Gestione Ordini')}
-        >
-          <div className="flex justify-between items-center mb-3">
-            <div className="flex items-center">
-              <ShoppingCart className="text-red-500" />
-              <h3 className="text-gray-700 font-medium ml-2">Ordini</h3>
-            </div>
-            <ArrowRight size={16} className="text-gray-400" />
-          </div>
-          
-          {/* Qui rendiamo dinamico il widget degli ordini */}
-          {dashboardData.ordiniAttivi && dashboardData.ordiniAttivi.length > 0 ? (
-            <div className="mt-2">
-              <OrdiniWidget ordiniAttivi={dashboardData.ordiniAttivi} />
-            </div>
-          ) : (
-            <div className="mt-4 grid grid-cols-5 gap-2">
-              <div className="text-center">
-                <div className="flex justify-center mb-1">
-                  <Home className="text-orange-500" size={20} />
-                </div>
-                <p className="text-xl font-bold text-gray-800">{metriche.ordiniAsporto}</p>
-                <p className="text-gray-500 text-xs">Asporto</p>
-              </div>
-              <div className="text-center">
-                <div className="flex justify-center mb-1">
-                  <PhoneCall className="text-blue-500" size={20} />
-                </div>
-                <p className="text-xl font-bold text-gray-800">{metriche.ordiniConsegna}</p>
-                <p className="text-gray-500 text-xs">Consegne</p>
-              </div>
-              <div className="text-center">
-                <div className="flex justify-center mb-1">
-                  <User className="text-green-500" size={20} />
-                </div>
-                <p className="text-xl font-bold text-gray-800">{metriche.ordiniRitiro}</p>
-                <p className="text-gray-500 text-xs">Ritiri</p>
-              </div>
-              <div className="text-center">
-                <div className="flex justify-center mb-1">
-                  <Monitor className="text-teal-500" size={20} />
-                </div>
-                <p className="text-xl font-bold text-gray-800">{metriche.ordiniOnline}</p>
-                <p className="text-gray-500 text-xs">Online</p>
-              </div>
-              <div className="text-center bg-red-200 rounded-lg p-1">
-                <div className="flex justify-center mb-1">
-                  <CheckCircle className="text-red-600" size={20} />
-                </div>
-                <p className="text-xl font-bold text-red-700">{metriche.ordiniOggi}</p>
-                <p className="text-red-600 text-xs">Totale</p>
-              </div>
-            </div>
-          )}
-        </div>
-        
+ {/* Widget Gestione Ordini */}
+<div 
+  className="bg-red-100 rounded-xl p-4 shadow-md transition-all hover:shadow-lg hover:translate-y-1 cursor-pointer md:col-span-2"
+  onClick={() => navigaVerso('Gestione Ordini')}
+>
+  <div className="flex justify-between items-center mb-3">
+    <div className="flex items-center">
+      <ShoppingCart className="text-red-500" />
+      <h3 className="text-gray-700 font-medium ml-2">Ordini</h3>
+    </div>
+    <ArrowRight size={16} className="text-gray-400" />
+  </div>
+  
+  {/* Contenuto del widget */}
+  <div className="mt-4 grid grid-cols-5 gap-2">
+    <div className="text-center">
+      <div className="flex justify-center mb-1">
+        <Home className="text-orange-500" size={20} />
+      </div>
+      <p className="text-xl font-bold text-gray-800">{metriche.ordiniAsporto}</p>
+      <p className="text-gray-500 text-xs">Asporto</p>
+    </div>
+    <div className="text-center">
+      <div className="flex justify-center mb-1">
+        <PhoneCall className="text-blue-500" size={20} />
+      </div>
+      <p className="text-xl font-bold text-gray-800">{metriche.ordiniConsegna}</p>
+      <p className="text-gray-500 text-xs">Consegne</p>
+    </div>
+    <div className="text-center">
+      <div className="flex justify-center mb-1">
+        <User className="text-green-500" size={20} />
+      </div>
+      <p className="text-xl font-bold text-gray-800">{metriche.ordiniRitiro}</p>
+      <p className="text-gray-500 text-xs">Ritiri</p>
+    </div>
+    <div className="text-center">
+      <div className="flex justify-center mb-1">
+        <Monitor className="text-teal-500" size={20} />
+      </div>
+      <p className="text-xl font-bold text-gray-800">{metriche.ordiniOnline}</p>
+      <p className="text-gray-500 text-xs">Online</p>
+    </div>
+    <div className="text-center bg-red-200 rounded-lg p-1">
+      <div className="flex justify-center mb-1">
+        <CheckCircle className="text-red-600" size={20} />
+      </div>
+      <p className="text-xl font-bold text-red-700">{metriche.ordiniOggi}</p>
+      <p className="text-red-600 text-xs">Totale</p>
+    </div>
+  </div>
+</div>    
+	 
+	 
         {/* Widget Programma Fedeltà */}
         <div 
           className="bg-orange-100 rounded-xl p-4 shadow-md transition-all hover:shadow-lg hover:translate-y-1 cursor-pointer md:col-span-2"
@@ -258,9 +232,6 @@ const PizzeriaDashboard = () => {
               <div className="flex justify-between items-center mb-2">
                 <span className="text-gray-600 font-medium">Punti Totali</span>
                 <span className="text-orange-600 font-bold text-xl">{metriche.puntiTotali}</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2.5">
-                <div className="bg-orange-600 h-2.5 rounded-full" style={{ width: '65%' }}></div>
               </div>
             </div>
             <div className="p-2 bg-amber-50 rounded-lg">
@@ -336,7 +307,6 @@ const PizzeriaDashboard = () => {
             </div>
           </div>
         </div>
-        
         {/* Widget Clienti */}
         <div 
           className="bg-teal-100 rounded-xl p-4 shadow-md transition-all hover:shadow-lg hover:translate-y-1 cursor-pointer"
@@ -363,7 +333,6 @@ const PizzeriaDashboard = () => {
             </div>
           </div>
         </div>
-        
         {/* Widget Menù */}
         <div 
           className="bg-rose-100 rounded-xl p-4 shadow-md transition-all hover:shadow-lg hover:translate-y-1 cursor-pointer"
@@ -457,7 +426,7 @@ const PizzeriaDashboard = () => {
                   </button>
                 </div>
               </div>
-            )}    
+            )}
             {visibilitaCassa.digitale && (
               <div className="flex justify-between items-center bg-white p-2 rounded-lg">
                 <div className="flex items-center">
@@ -521,8 +490,7 @@ const PizzeriaDashboard = () => {
               </div>
             )}
           </div>
-        </div>    
-        
+        </div>
         {/* Widget Statistiche */}
         <div 
           className="bg-amber-100 rounded-xl p-4 shadow-md transition-all hover:shadow-lg hover:translate-y-1 cursor-pointer"
@@ -569,8 +537,8 @@ const PizzeriaDashboard = () => {
               <p className="text-gray-600">in esaurimento</p>
             </div>
           </div>
-        </div>	
-		
+        </div>  
+        
         {/* Widget Impostazioni */}
         <div 
           className="bg-gray-100 rounded-xl p-4 shadow-md transition-all hover:shadow-lg hover:translate-y-1 cursor-pointer"

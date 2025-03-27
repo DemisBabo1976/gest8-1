@@ -5,27 +5,21 @@ const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
 const path = require('path');
 
-// Carica le variabili d'ambiente
 dotenv.config();
 
-// Inizializza l'app Express
 const app = express();
 
-// Configurazione CORS più permissiva per lo sviluppo
 app.use(cors({
   origin: ['http://localhost:3000', 'http://localhost:5000'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], // Aggiunto PATCH per supportare updateStatoOrdine
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Middleware per parsing del body
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Configurazione directory file statici
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Connessione a MongoDB
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/gest8', {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -33,13 +27,19 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/gest8', {
 .then(() => console.log('Connessione a MongoDB stabilita con successo'))
 .catch(err => console.error('Errore di connessione a MongoDB:', err));
 
-// Importa le rotte
+// Importazione delle rotte
 const clientiRoutes = require('./routes/clienti/clientiRoutes');
+const fedeltaRoutes = require('./routes/fedelta/fedeltaRoutes');
+const ordiniRoutes = require('./routes/ordini/ordiniRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
-// Usa le rotte
+// Configurazione delle rotte API
 app.use('/api/clienti', clientiRoutes);
+app.use('/api/fedelta', fedeltaRoutes);
+app.use('/api/ordini', ordiniRoutes);   // Questa è la rotta che gestisce tutte le operazioni sugli ordini
+app.use('/api/dashboard', dashboardRoutes);
 
-// Gestore errori
+// Middleware per la gestione degli errori
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
@@ -49,10 +49,8 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Definizione porta
 const PORT = process.env.PORT || 5000;
 
-// Avvio del server
 app.listen(PORT, () => {
   console.log(`Server in esecuzione sulla porta ${PORT}`);
 });

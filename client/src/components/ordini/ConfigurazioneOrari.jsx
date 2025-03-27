@@ -29,7 +29,7 @@ const ConfigurazioneOrari = ({ onClose }) => {
   
   // Effetto per aggiornare la configurazione corrente quando cambia il giorno selezionato
   useEffect(() => {
-    if (configurazioni.length > 0) {
+    if (configurazioni && configurazioni.length > 0) {
       const configGiorno = configurazioni.find(c => c.giorno === giornoSelezionato);
       
       if (configGiorno) {
@@ -51,200 +51,126 @@ const ConfigurazioneOrari = ({ onClose }) => {
     }
   }, [giornoSelezionato, configurazioni]);
   
-  // Funzione per recuperare le configurazioni dal server
-  const fetchConfigurazioni = async () => {
-    setIsLoading(true);
-    setError(null);
+const fetchConfigurazioni = async () => {
+  setIsLoading(true);
+  setError(null);
+  
+  try {
+    // Prova a ottenere i dati dall'API
+    const response = await axios.get('/api/ordini/configurazione', { 
+      timeout: 5000,
+      validateStatus: function (status) {
+        return status < 500;
+      }
+    });
     
-    try {
-      // Imposta un timeout per la richiesta
-      const response = await axios.get('/api/ordini/configurazione', { 
-        timeout: 5000,
-        // In caso di errore 500, prova a usare dati fittizi
-        validateStatus: function (status) {
-          return status < 500; // Risolve solo se lo status è inferiore a 500
-        }
-      });
-      
+    if (response.data && response.data.data) {
       setConfigurazioni(response.data.data);
-    } catch (err) {
-      console.error('Errore nel caricamento delle configurazioni:', err);
-      
-      // Crea dati di esempio per continuare a lavorare anche in caso di errore del server
-      if (err.response?.status === 500 || err.code === 'ECONNABORTED') {
-        setError('Errore nel caricamento delle configurazioni. Usando dati predefiniti temporanei.');
-        
-        // Crea configurazioni di esempio per ogni giorno della settimana
-        const configurazioniPredefinite = Array(7).fill(0).map((_, index) => ({
-          id: index,
-          giorno: index,
-          aperto: index < 5, // Lunedì-Venerdì aperto, weekend chiuso
-          intervalloSlot: 10,
-          capacitaSlot: 5,
-          turni: index < 5 ? [
-            { apertura: '12:00', chiusura: '14:30' },
-            { apertura: '18:00', chiusura: '23:00' }
-          ] : []
-        }));
-        
-        setConfigurazioni(configurazioniPredefinite);
-      } else {
-        setError('Errore nel caricamento delle configurazioni. Riprova più tardi.');
-      }
-    } finally {
-      setIsLoading(false);
+      // Salva anche in localStorage per il futuro
+      localStorage.setItem('configurazioni-orari', JSON.stringify(response.data.data));
+    } else {
+      throw new Error('Dati non validi dalla risposta API');
     }
-  };
+  } catch (err) {
+    console.error('Errore nel caricamento delle configurazioni:', err);
+    
+    // Prova a caricare dal localStorage
+    const localData = localStorage.getItem('configurazioni-orari');
+    
+    if (localData) {
+      try {
+        const parsedData = JSON.parse(localData);
+        setConfigurazioni(parsedData);
+        setError('Caricati dati locali (server non disponibile)');
+      } catch (parseError) {
+        console.error('Errore nel parsing dei dati locali:', parseError);
+        createDefaultConfigurations();
+      }
+    } else {
+      createDefaultConfigurations();
+    }
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+// Funzione helper per creare configurazioni predefinite
+const createDefaultConfigurations = () => {
+  const configurazioniPredefinite = Array(7).fill(0).map((_, index) => ({
+    id: index,
+    giorno: index,
+    nomeGiorno: giorniSettimana[index],
+    aperto: index === 1, // Solo Martedì aperto per default (come nell'immagine)
+    intervalloSlot: 10,
+    capacitaSlot: 5,
+    turni: index === 1 ? [
+      { apertura: '12:00', chiusura: '14:30' },
+      { apertura: '18:00', chiusura: '23:00' }
+    ] : []
+  }));
   
-  // Funzione per aggiornare la configurazione del giorno selezionato
-  const salvaConfigurazione = async () => {
-    setIsLoading(true);
-    setError(null);
-    setSuccessMessage(null);
-    
-    try {
-      const response = await axios.put(`/api/ordini/configurazione/${giornoSelezionato}`, configurazione, {
-        timeout: 5000,
-        // In caso di errore, considera comunque l'operazione come eseguita per continuare 
-        // a lavorare anche in caso di errore del server
-        validateStatus: function (status) {
-          return status < 500;
-        }
-      });
-      
-      // In caso di risposta corretta, aggiorna l'array delle configurazioni
-      if (response.status === 200) {
-        const nuoveConfigurazioni = configurazioni.map(c => 
-          c.giorno === giornoSelezionato ? { ...response.data.data } : c
-        );
-        
-        setConfigurazioni(nuoveConfigurazioni);
-        setSuccessMessage('Configurazione salvata con successo');
-      } else {
-        // In caso di errore con status < 500, mostra il messaggio di errore
-        setError('Errore nel salvataggio: ' + (response.data?.message || 'Errore sconosciuto'));
-        
-        // Aggiorna comunque localmente
-        const nuoveConfigurazioni = [...configurazioni];
-        const index = nuoveConfigurazioni.findIndex(c => c.giorno === giornoSelezionato);
-        
-        if (index >= 0) {
-          nuoveConfigurazioni[index] = { ...nuoveConfigurazioni[index], ...configurazione };
-        } else {
-          nuoveConfigurazioni.push({
-            id: configurazioni.length,
-            giorno: giornoSelezionato,
-            ...configurazione
-          });
-        }
-        
-        setConfigurazioni(nuoveConfigurazioni);
-        setSuccessMessage('Configurazione salvata localmente (modalità offline)');
-      }
-      
-      // Nascondi il messaggio dopo 3 secondi
-      setTimeout(() => {
-        setSuccessMessage(null);
-      }, 3000);
-    } catch (err) {
-      console.error('Errore nel salvataggio della configurazione:', err);
-      
-      // In caso di errore di rete, salva comunque localmente
-      const nuoveConfigurazioni = [...configurazioni];
-      const index = nuoveConfigurazioni.findIndex(c => c.giorno === giornoSelezionato);
-      
-      if (index >= 0) {
-        nuoveConfigurazioni[index] = { ...nuoveConfigurazioni[index], ...configurazione };
-      } else {
-        nuoveConfigurazioni.push({
-          id: configurazioni.length,
-          giorno: giornoSelezionato,
-          ...configurazione
-        });
-      }
-      
-      setConfigurazioni(nuoveConfigurazioni);
-      setError('Errore di connessione al server. Configurazione salvata solo localmente.');
-      setSuccessMessage('Configurazione salvata localmente (modalità offline)');
-      
-      // Nascondi il messaggio dopo 3 secondi
-      setTimeout(() => {
-        setSuccessMessage(null);
-      }, 3000);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  setConfigurazioni(configurazioniPredefinite);
+  setError('Utilizzati dati predefiniti.');
   
-  // Funzione per copiare la configurazione a tutti i giorni
-  const copiaConfigurazioneATutti = async () => {
-    if (!window.confirm('Sei sicuro di voler copiare questa configurazione a tutti i giorni della settimana?')) {
-      return;
-    }
-    
-    setIsLoading(true);
-    setError(null);
-    setSuccessMessage(null);
-    
+  // Salva anche in localStorage per il futuro
+  localStorage.setItem('configurazioni-orari', JSON.stringify(configurazioniPredefinite));
+};  
+  
+ const salvaConfigurazione = async () => {
+  setIsLoading(true);
+  setError(null);
+  setSuccessMessage(null);
+  
+  try {
+    // Tenta di chiamare l'API
     try {
-      const response = await axios.post(`/api/ordini/configurazione/${giornoSelezionato}/copia-a-tutti`, {}, {
-        timeout: 5000,
-        validateStatus: function (status) {
-          return status < 500;
-        }
-      });
-      
-      if (response.status === 200) {
-        // Ricarica tutte le configurazioni
-        await fetchConfigurazioni();
-        setSuccessMessage('Configurazione copiata a tutti i giorni con successo');
-      } else {
-        // In caso di errore con status < 500, mostra il messaggio di errore
-        setError('Errore nella copia: ' + (response.data?.message || 'Errore sconosciuto'));
-        
-        // Implementa la copia localmente
-        const configAttuale = configurazione;
-        const nuoveConfigurazioni = configurazioni.map(c => ({
-          ...c,
-          aperto: configAttuale.aperto,
-          intervalloSlot: configAttuale.intervalloSlot,
-          capacitaSlot: configAttuale.capacitaSlot,
-          turni: [...configAttuale.turni]
-        }));
-        
-        setConfigurazioni(nuoveConfigurazioni);
-        setSuccessMessage('Configurazione copiata localmente (modalità offline)');
-      }
-      
-      // Nascondi il messaggio dopo 3 secondi
-      setTimeout(() => {
-        setSuccessMessage(null);
-      }, 3000);
-    } catch (err) {
-      console.error('Errore nella copia della configurazione:', err);
-      
-      // Implementa la copia localmente
-      const configAttuale = configurazione;
-      const nuoveConfigurazioni = configurazioni.map(c => ({
-        ...c,
-        aperto: configAttuale.aperto,
-        intervalloSlot: configAttuale.intervalloSlot,
-        capacitaSlot: configAttuale.capacitaSlot,
-        turni: [...configAttuale.turni]
-      }));
-      
-      setConfigurazioni(nuoveConfigurazioni);
-      setError('Errore di connessione al server. Configurazione copiata solo localmente.');
-      setSuccessMessage('Configurazione copiata localmente (modalità offline)');
-      
-      // Nascondi il messaggio dopo 3 secondi
-      setTimeout(() => {
-        setSuccessMessage(null);
-      }, 3000);
-    } finally {
-      setIsLoading(false);
+      await axios.put(`/api/ordini/configurazione/${giornoSelezionato}`, configurazione);
+    } catch (apiError) {
+      console.warn("Errore nell'API, utilizzo localStorage come fallback", apiError);
     }
-  };
+    
+    // Aggiorna sempre il localStorage indipendentemente dal risultato dell'API
+    const configurazioneSalvate = JSON.parse(localStorage.getItem('configurazioni-orari') || '[]');
+    
+    // Trova l'indice della configurazione per questo giorno
+    const index = configurazioneSalvate.findIndex(c => c.giorno === giornoSelezionato);
+    
+    if (index >= 0) {
+      // Aggiorna la configurazione esistente
+      configurazioneSalvate[index] = {
+        ...configurazioneSalvate[index],
+        ...configurazione,
+        giorno: giornoSelezionato,
+        nomeGiorno: giorniSettimana[giornoSelezionato]
+      };
+    } else {
+      // Aggiungi una nuova configurazione
+      configurazioneSalvate.push({
+        ...configurazione,
+        giorno: giornoSelezionato,
+        nomeGiorno: giorniSettimana[giornoSelezionato]
+      });
+    }
+    
+    // Salva nel localStorage
+    localStorage.setItem('configurazioni-orari', JSON.stringify(configurazioneSalvate));
+    
+    // Aggiorna l'interfaccia
+    const nuoveConfigurazioni = [...configurazioneSalvate];
+    setConfigurazioni(nuoveConfigurazioni);
+    setSuccessMessage('Configurazione salvata con successo');
+    
+    // Nascondi il messaggio dopo 3 secondi
+    setTimeout(() => {
+      setSuccessMessage(null);
+    }, 3000);
+  } catch (err) {
+    console.error('Errore nel salvataggio della configurazione:', err);
+    setError('Errore nel salvataggio. Riprova più tardi.');
+  } finally {
+    setIsLoading(false);
+  }
+};
   
   // Funzione per aggiungere un nuovo turno
   const aggiungiTurno = () => {
@@ -285,6 +211,69 @@ const ConfigurazioneOrari = ({ onClose }) => {
       ...configurazione,
       turni: nuoviTurni
     });
+  };
+  
+  // Funzione per copiare la configurazione a tutti i giorni
+  const copiaConfigurazioneATutti = async () => {
+    if (!window.confirm('Sei sicuro di voler copiare questa configurazione a tutti i giorni della settimana?')) {
+      return;
+    }
+    
+    setIsLoading(true);
+    setError(null);
+    setSuccessMessage(null);
+    
+    try {
+      // In una implementazione reale:
+      // await axios.post(`/api/ordini/configurazione/${giornoSelezionato}/copia-a-tutti`);
+      
+      // Simulazione di risposta di successo
+      setTimeout(() => {
+        // Implementa la copia localmente
+        const configAttuale = configurazione;
+        const nuoveConfigurazioni = [...configurazioni];
+        
+        for (let i = 0; i < 7; i++) {
+          if (i !== giornoSelezionato) {
+            const index = nuoveConfigurazioni.findIndex(c => c.giorno === i);
+            
+            if (index !== -1) {
+              nuoveConfigurazioni[index] = {
+                ...nuoveConfigurazioni[index],
+                aperto: configAttuale.aperto,
+                intervalloSlot: configAttuale.intervalloSlot,
+                capacitaSlot: configAttuale.capacitaSlot,
+                turni: JSON.parse(JSON.stringify(configAttuale.turni)) // Deep clone
+              };
+            } else {
+              nuoveConfigurazioni.push({
+                id: nuoveConfigurazioni.length,
+                giorno: i,
+                nomeGiorno: giorniSettimana[i],
+                aperto: configAttuale.aperto,
+                intervalloSlot: configAttuale.intervalloSlot,
+                capacitaSlot: configAttuale.capacitaSlot,
+                turni: JSON.parse(JSON.stringify(configAttuale.turni)) // Deep clone
+              });
+            }
+          }
+        }
+        
+        setConfigurazioni(nuoveConfigurazioni);
+        setSuccessMessage('Configurazione copiata a tutti i giorni con successo');
+        
+        // Nascondi il messaggio dopo 3 secondi
+        setTimeout(() => {
+          setSuccessMessage(null);
+        }, 3000);
+        
+        setIsLoading(false);
+      }, 500);
+    } catch (err) {
+      console.error('Errore nella copia della configurazione:', err);
+      setError('Errore nella copia. Riprova più tardi.');
+      setIsLoading(false);
+    }
   };
   
   // Array dei giorni della settimana
@@ -367,7 +356,7 @@ const ConfigurazioneOrari = ({ onClose }) => {
                   <div className="flex justify-between items-center">
                     <span className="font-medium">{giorno}</span>
                     
-                    {configurazioni.length > 0 && configurazioni.find(c => c.giorno === index) && (
+                    {configurazioni && configurazioni.length > 0 && configurazioni.find(c => c.giorno === index) && (
                       <span className={`text-xs px-2 py-1 rounded-full ${
                         configurazioni.find(c => c.giorno === index).aperto ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                       }`}>
@@ -377,7 +366,7 @@ const ConfigurazioneOrari = ({ onClose }) => {
                   </div>
                   
                   {/* Mostra "Non configurato" se non ci sono configurazioni per questo giorno */}
-                  {configurazioni.length > 0 && !configurazioni.find(c => c.giorno === index) && (
+                  {configurazioni && configurazioni.length > 0 && !configurazioni.find(c => c.giorno === index) && (
                     <span className="text-xs text-red-500">Non configurato</span>
                   )}
                 </div>

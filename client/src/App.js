@@ -16,7 +16,7 @@ function App() {
           <Route path="/clienti" element={<ClientiPage />} />
           <Route path="/menu" element={<MenuPage />} />
           <Route path="/fedelta" element={<FedeltaPage />} />
-		  <Route path="/ordini" element={<OrdiniPage />} />
+          <Route path="/ordini" element={<OrdiniPage />} />
           {/* Altre rotte saranno aggiunte qui man mano che si creano nuove pagine */}
         </Routes>
       </Router>
