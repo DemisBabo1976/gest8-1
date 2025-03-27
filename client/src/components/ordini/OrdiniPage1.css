@@ -1,0 +1,62 @@
+.ordini-page .card {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.ordini-page .page-title {
+  font-weight: 600;
+  color: #333;
+}
+
+.ordini-page .status-badge {
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  border-radius: 20px;
+}
+
+.ordini-page .status-nuovo {
+  background-color: #e7f5ff;
+  color: #1864ab;
+}
+
+.ordini-page .status-in-preparazione {
+  background-color: #fff9db;
+  color: #e67700;
+}
+
+.ordini-page .status-pronto {
+  background-color: #d3f9d8;
+  color: #2b8a3e;
+}
+
+.ordini-page .status-in-consegna {
+  background-color: #e3fafc;
+  color: #0b7285;
+}
+
+.ordini-page .status-consegnato {
+  background-color: #f8f9fa;
+  color: #495057;
+}
+
+.ordini-page .status-annullato {
+  background-color: #ffe3e3;
+  color: #c92a2a;
+}
+
+.ordini-page .ordine-card {
+  transition: transform 0.2s;
+  cursor: pointer;
+}
+
+.ordini-page .ordine-card:hover {
+  transform: translateY(-3px);
+}
+
+.ordini-page .order-actions {
+  opacity: 0.7;
+}
+
+.ordini-page .ordine-card:hover .order-actions {
+  opacity: 1;
+}

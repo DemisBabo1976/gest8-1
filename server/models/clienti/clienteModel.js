@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const clienteSchema = new mongoose.Schema({
+const ClienteSchema = new mongoose.Schema({
   nome: {
     type: String,
     required: [true, 'Il nome è obbligatorio'],
@@ -8,14 +8,14 @@ const clienteSchema = new mongoose.Schema({
   },
   telefono: {
     type: String,
-    required: [true, 'Il numero di telefono è obbligatorio'],
+    required: [true, 'Il telefono è obbligatorio'],
     trim: true
   },
   email: {
     type: String,
-    trim: true,
     lowercase: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Inserisci un indirizzo email valido']
+    trim: true,
+    sparse: true // Permette valori nulli unici
   },
   indirizzo: {
     type: String,
@@ -28,29 +28,11 @@ const clienteSchema = new mongoose.Schema({
   },
   punti: {
     type: Number,
-    default: 0
-  },
-  dataRegistrazione: {
-    type: Date,
-    default: Date.now
-  },
-  ultimoOrdine: {
-    type: Date
-  },
-  note: {
-    type: String,
-    trim: true
-  },
-  ordiniTotali: {
-    type: Number,
-    default: 0
-  },
-  spesaTotale: {
-    type: Number,
-    default: 0
+    default: 0,
+    min: 0
   }
 }, {
   timestamps: true
 });
 
-module.exports = mongoose.model('Cliente', clienteSchema);
+module.exports = mongoose.model('Cliente', ClienteSchema);

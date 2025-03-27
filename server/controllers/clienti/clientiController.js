@@ -3,13 +3,27 @@ const Cliente = require('../../models/clienti/clienteModel');
 // Ottieni tutti i clienti
 exports.getClienti = async (req, res) => {
   try {
-    const clienti = await Cliente.find();
-    res.status(200).json(clienti);
+    // Aggiungi più log per il debug
+    console.log('Inizio recupero clienti');
+    
+    // Aggiungi opzioni di query per ordinare e selezionare campi specifici
+    const clienti = await Cliente.find()
+      .select('nome telefono email badge punti') // Seleziona solo i campi necessari
+      .sort({ createdAt: -1 }); // Ordina dal più recente
+    
+    console.log(`Trovati ${clienti.length} clienti`);
+    
+    res.status(200).json({
+      success: true,
+      count: clienti.length,
+      data: clienti
+    });
   } catch (error) {
+    console.error('Errore dettagliato nel recupero dei clienti:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Errore nel recupero dei clienti', 
-      error: error.message 
+      error: error.toString() 
     });
   }
 };
@@ -108,6 +122,41 @@ exports.deleteCliente = async (req, res) => {
       success: false, 
       message: 'Errore nell\'eliminazione del cliente', 
       error: error.message 
+    });
+  }
+};
+
+// Implementazione del metodo di ricerca
+exports.searchClienti = async (req, res) => {
+  try {
+    const query = req.query.q;
+    
+    if (!query) {
+      return res.status(400).json({
+        success: false,
+        message: 'Query di ricerca mancante'
+      });
+    }
+    
+    // Ricerca per nome, telefono o email
+    const clienti = await Cliente.find({
+      $or: [
+        { nome: { $regex: query, $options: 'i' } },
+        { telefono: { $regex: query, $options: 'i' } },
+        { email: { $regex: query, $options: 'i' } }
+      ]
+    });
+    
+    res.status(200).json({
+      success: true,
+      count: clienti.length,
+      data: clienti
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Errore nella ricerca dei clienti',
+      error: error.message
     });
   }
 };

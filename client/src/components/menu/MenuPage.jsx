@@ -1312,7 +1312,7 @@ const parseAllergeni = (data) => {
                       value={ingredienteInput}
                       onChange={(e) => setIngredienteInput(e.target.value)}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-rose-500"
-                      placeholder="Aggiungi ingrediente..."
+                      placeholder="uno per volta..."
                       onKeyPress={(e) => e.key === 'Enter' && handleAddIngrediente()}
                     />
                     <button
